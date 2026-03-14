@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Easter Tic Tac Toe</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #fce4f0 0%, #e8f4fd 50%, #f0fce4 100%);
+      font-family: 'Nunito', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Floating decorations */
+    .deco {
+      position: fixed;
+      font-size: 2rem;
+      animation: floatDeco linear infinite;
+      pointer-events: none;
+      opacity: 0.4;
+      user-select: none;
+    }
+
+    @keyframes floatDeco {
+      0% { transform: translateY(110vh) rotate(0deg); }
+      100% { transform: translateY(-10vh) rotate(360deg); }
+    }
+
+    h1 {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2.8rem;
+      color: #c45c9e;
+      text-shadow: 3px 3px 0 #f9a8d4, 5px 5px 0 rgba(0,0,0,0.1);
+      margin-bottom: 0.3rem;
+      text-align: center;
+    }
+
+    .subtitle {
+      font-size: 1rem;
+      color: #a855f7;
+      margin-bottom: 1.5rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    .scoreboard {
+      display: flex;
+      gap: 2rem;
+      margin-bottom: 1.2rem;
+      background: rgba(255,255,255,0.7);
+      border-radius: 20px;
+      padding: 0.7rem 2rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    .score-item {
+      text-align: center;
+    }
+
+    .score-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #6b7280;
+    }
+
+    .score-val {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.8rem;
+      line-height: 1;
+    }
+
+    .score-val.egg { color: #ec4899; }
+    .score-val.bunny { color: #8b5cf6; }
+    .score-val.tie { color: #f59e0b; }
+
+    .player-display {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #374151;
+      margin-bottom: 1rem;
+      background: rgba(255,255,255,0.7);
+      padding: 0.5rem 1.5rem;
+      border-radius: 50px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      transition: all 0.3s ease;
+    }
+
+    .player-display span {
+      display: inline-block;
+      animation: pulse 1s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      padding: 20px;
+      background: rgba(255,255,255,0.6);
+      border-radius: 24px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+      backdrop-filter: blur(4px);
+      margin-bottom: 1.5rem;
+    }
+
+    .cell {
+      width: 110px;
+      height: 110px;
+      border-radius: 18px;
+      border: none;
+      background: rgba(255,255,255,0.9);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08), inset 0 2px 4px rgba(255,255,255,0.8);
+      cursor: pointer;
+      font-size: 3.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cell:hover:not(.taken) {
+      transform: translateY(-3px) scale(1.04);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+      background: rgba(255,255,255,1);
+    }
+
+    .cell.taken { cursor: default; }
+
+    .cell.egg-cell {
+      background: linear-gradient(135deg, #fce7f3, #fbcfe8);
+      box-shadow: 0 4px 15px rgba(236,72,153,0.25);
+      animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .cell.bunny-cell {
+      background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+      box-shadow: 0 4px 15px rgba(139,92,246,0.25);
+      animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0) rotate(-10deg); opacity: 0; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+
+    .cell.winner-cell {
+      animation: winPop 0.6s ease forwards;
+    }
+
+    @keyframes winPop {
+      0% { transform: scale(1); }
+      30% { transform: scale(1.25) rotate(5deg); }
+      60% { transform: scale(1.1) rotate(-3deg); }
+      100% { transform: scale(1.15); box-shadow: 0 6px 30px rgba(251,191,36,0.6); background: linear-gradient(135deg, #fef3c7, #fde68a); }
+    }
+
+    .status-message {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.8rem;
+      text-align: center;
+      min-height: 2.5rem;
+      color: #7c3aed;
+      transition: all 0.3s ease;
+    }
+
+    .status-message.win { color: #d97706; animation: bounceMsg 0.5s ease; }
+    .status-message.tie { color: #6b7280; }
+
+    @keyframes bounceMsg {
+      0%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-10px); }
+      60% { transform: translateY(-4px); }
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    button.action-btn {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      padding: 0.6rem 1.8rem;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    button.action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+    }
+
+    button.action-btn:active { transform: translateY(0); }
+
+    .btn-new {
+      background: linear-gradient(135deg, #ec4899, #a855f7);
+      color: white;
+    }
+
+    .btn-reset {
+      background: linear-gradient(135deg, #f59e0b, #ef4444);
+      color: white;
+    }
+
+    /* Win overlay */
+    #win-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    .confetti-piece {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      animation: confettiFall linear forwards;
+    }
+
+    @keyframes confettiFall {
+      0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+    }
+
+    .mode-select {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.2rem;
+      background: rgba(255,255,255,0.7);
+      border-radius: 50px;
+      padding: 0.4rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    .mode-btn {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 0.4rem 1.1rem;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      background: transparent;
+      color: #6b7280;
+      transition: all 0.2s ease;
+    }
+
+    .mode-btn.active {
+      background: linear-gradient(135deg, #a855f7, #ec4899);
+      color: white;
+      box-shadow: 0 2px 8px rgba(168,85,247,0.4);
+    }
+  </style>
+</head>
+<body>
+
+  <div id="win-overlay"></div>
+
+  <h1>🐣 Easter Tic Tac Toe</h1>
+  <p class="subtitle">🌷 Spring Edition 🌷</p>
+
+  <div class="scoreboard">
+    <div class="score-item">
+      <div class="score-label">🥚 Egg</div>
+      <div class="score-val egg" id="score-egg">0</div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">🤝 Ties</div>
+      <div class="score-val tie" id="score-tie">0</div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">🐰 Bunny</div>
+      <div class="score-val bunny" id="score-bunny">0</div>
+    </div>
+  </div>
+
+  <div class="mode-select">
+    <button class="mode-btn active" id="btn-2p" onclick="setMode('2p')">👥 2 Players</button>
+    <button class="mode-btn" id="btn-ai-easy" onclick="setMode('easy')">🐣 vs Easy AI</button>
+    <button class="mode-btn" id="btn-ai-hard" onclick="setMode('hard')">🐇 vs Hard AI</button>
+  </div>
+
+  <div class="player-display" id="player-display">
+    <span>🥚</span> Egg's Turn
+  </div>
+
+  <div class="board" id="board">
+    <button class="cell" onclick="handleClick(0)"></button>
+    <button class="cell" onclick="handleClick(1)"></button>
+    <button class="cell" onclick="handleClick(2)"></button>
+    <button class="cell" onclick="handleClick(3)"></button>
+    <button class="cell" onclick="handleClick(4)"></button>
+    <button class="cell" onclick="handleClick(5)"></button>
+    <button class="cell" onclick="handleClick(6)"></button>
+    <button class="cell" onclick="handleClick(7)"></button>
+    <button class="cell" onclick="handleClick(8)"></button>
+  </div>
+
+  <div class="status-message" id="status"></div>
+
+  <div class="btn-row">
+    <button class="action-btn btn-new" onclick="newGame()">🐣 New Game</button>
+    <button class="action-btn btn-reset" onclick="resetScores()">🔄 Reset Scores</button>
+  </div>
+
+  <script>
+    const WINNING_LINES = [
+      [0,1,2],[3,4,5],[6,7,8],
+      [0,3,6],[1,4,7],[2,5,8],
+      [0,4,8],[2,4,6]
+    ];
+
+    const EMOJIS = {
+      egg:   ['🥚','🐣','🌸','🌺','🌼'],
+      bunny: ['🐰','🐇','🌷','🌻','🦋']
+    };
+
+    let board = Array(9).fill(null);
+    let currentPlayer = 'egg'; // 'egg' or 'bunny'
+    let gameOver = false;
+    let scores = { egg: 0, bunny: 0, tie: 0 };
+    let mode = '2p'; // '2p', 'easy', 'hard'
+
+    function setMode(m) {
+      mode = m;
+      document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('btn-2p').classList.toggle('active', m === '2p');
+      document.getElementById('btn-ai-easy').classList.toggle('active', m === 'easy');
+      document.getElementById('btn-ai-hard').classList.toggle('active', m === 'hard');
+      newGame();
+    }
+
+    function randomEmoji(player) {
+      const arr = EMOJIS[player];
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function handleClick(index) {
+      if (gameOver || board[index]) return;
+      if (mode !== '2p' && currentPlayer === 'bunny') return; // AI's turn
+
+      makeMove(index, currentPlayer);
+
+      if (!gameOver && mode !== '2p' && currentPlayer === 'bunny') {
+        setTimeout(aiMove, 400);
+      }
+    }
+
+    function makeMove(index, player) {
+      board[index] = player;
+      const cell = document.querySelectorAll('.cell')[index];
+      cell.textContent = randomEmoji(player);
+      cell.classList.add('taken', player === 'egg' ? 'egg-cell' : 'bunny-cell');
+
+      const winner = checkWinner();
+      if (winner) {
+        endGame(winner);
+      } else if (board.every(c => c)) {
+        endGame(null);
+      } else {
+        currentPlayer = currentPlayer === 'egg' ? 'bunny' : 'egg';
+        updateDisplay();
+      }
+    }
+
+    function aiMove() {
+      if (gameOver) return;
+      let idx;
+      if (mode === 'hard') {
+        idx = bestMove();
+      } else {
+        // Easy: random with occasional smart move
+        idx = Math.random() < 0.4 ? bestMove() : randomMove();
+      }
+      if (idx !== null) makeMove(idx, 'bunny');
+    }
+
+    function randomMove() {
+      const empty = board.map((v,i) => v === null ? i : null).filter(v => v !== null);
+      return empty.length ? empty[Math.floor(Math.random() * empty.length)] : null;
+    }
+
+    function bestMove() {
+      // Minimax
+      let best = -Infinity, move = null;
+      board.forEach((val, i) => {
+        if (!val) {
+          board[i] = 'bunny';
+          const score = minimax(board, 0, false);
+          board[i] = null;
+          if (score > best) { best = score; move = i; }
+        }
+      });
+      return move;
+    }
+
+    function minimax(b, depth, isMax) {
+      const w = checkWinner(b);
+      if (w === 'bunny') return 10 - depth;
+      if (w === 'egg') return depth - 10;
+      if (b.every(c => c)) return 0;
+
+      if (isMax) {
+        let best = -Infinity;
+        b.forEach((val, i) => {
+          if (!val) {
+            b[i] = 'bunny';
+            best = Math.max(best, minimax(b, depth+1, false));
+            b[i] = null;
+          }
+        });
+        return best;
+      } else {
+        let best = Infinity;
+        b.forEach((val, i) => {
+          if (!val) {
+            b[i] = 'egg';
+            best = Math.min(best, minimax(b, depth+1, true));
+            b[i] = null;
+          }
+        });
+        return best;
+      }
+    }
+
+    function checkWinner(b = board) {
+      for (const [a, bb, c] of WINNING_LINES) {
+        if (b[a] && b[a] === b[bb] && b[a] === b[c]) return b[a];
+      }
+      return null;
+    }
+
+    function endGame(winner) {
+      gameOver = true;
+      const cells = document.querySelectorAll('.cell');
+
+      if (winner) {
+        scores[winner]++;
+        updateScores();
+
+        // Highlight winning cells
+        for (const [a, b, c] of WINNING_LINES) {
+          if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+            [a, b, c].forEach(i => cells[i].classList.add('winner-cell'));
+            break;
+          }
+        }
+
+        const label = winner === 'egg' ? '🥚 Egg Wins!' : '🐰 Bunny Wins!';
+        document.getElementById('status').textContent = label + ' 🎉';
+        document.getElementById('status').className = 'status-message win';
+        document.getElementById('player-display').innerHTML = winner === 'egg'
+          ? '<span>🥚</span> Egg is the Easter champ!'
+          : '<span>🐰</span> Bunny hops to victory!';
+
+        launchConfetti();
+      } else {
+        scores.tie++;
+        updateScores();
+        document.getElementById('status').textContent = "🌸 It's a tie! So eggs-tra!";
+        document.getElementById('status').className = 'status-message tie';
+        document.getElementById('player-display').textContent = '🤝 No winner this round!';
+      }
+    }
+
+    function updateDisplay() {
+      const pd = document.getElementById('player-display');
+      if (currentPlayer === 'egg') {
+        pd.innerHTML = '<span>🥚</span> Egg\'s Turn';
+      } else if (mode === '2p') {
+        pd.innerHTML = '<span>🐰</span> Bunny\'s Turn';
+      } else {
+        pd.innerHTML = '<span>🐰</span> Bunny is thinking…';
+      }
+      document.getElementById('status').textContent = '';
+      document.getElementById('status').className = 'status-message';
+    }
+
+    function updateScores() {
+      document.getElementById('score-egg').textContent = scores.egg;
+      document.getElementById('score-bunny').textContent = scores.bunny;
+      document.getElementById('score-tie').textContent = scores.tie;
+    }
+
+    function newGame() {
+      board = Array(9).fill(null);
+      currentPlayer = 'egg';
+      gameOver = false;
+      document.querySelectorAll('.cell').forEach(c => {
+        c.textContent = '';
+        c.className = 'cell';
+      });
+      updateDisplay();
+    }
+
+    function resetScores() {
+      scores = { egg: 0, bunny: 0, tie: 0 };
+      updateScores();
+      newGame();
+    }
+
+    function launchConfetti() {
+      const overlay = document.getElementById('win-overlay');
+      overlay.style.display = 'block';
+      overlay.innerHTML = '';
+      const colors = ['#ec4899','#a855f7','#f59e0b','#10b981','#3b82f6','#ef4444'];
+      const shapes = ['🥚','🐣','🌸','🌷','🌺','🦋','⭐'];
+
+      for (let i = 0; i < 60; i++) {
+        const el = document.createElement('div');
+        const useEmoji = Math.random() > 0.5;
+        if (useEmoji) {
+          el.style.fontSize = `${Math.random() * 1.2 + 0.8}rem`;
+          el.textContent = shapes[Math.floor(Math.random() * shapes.length)];
+          el.style.background = 'transparent';
+          el.style.width = 'auto';
+          el.style.height = 'auto';
+        } else {
+          el.className = 'confetti-piece';
+          el.style.background = colors[Math.floor(Math.random() * colors.length)];
+          el.style.width = `${Math.random() * 8 + 6}px`;
+          el.style.height = `${Math.random() * 8 + 6}px`;
+          el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+        }
+        el.style.position = 'absolute';
+        el.style.left = `${Math.random() * 100}%`;
+        el.style.top = `-20px`;
+        el.style.animationDuration = `${Math.random() * 2 + 1.5}s`;
+        el.style.animationDelay = `${Math.random() * 0.8}s`;
+        el.style.animationName = 'confettiFall';
+        el.style.animationTimingFunction = 'linear';
+        el.style.animationFillMode = 'forwards';
+        overlay.appendChild(el);
+      }
+
+      setTimeout(() => { overlay.style.display = 'none'; }, 3500);
+    }
+
+    // Spawn floating background decorations
+    const decos = ['🌸','🌷','🌺','🐣','🐰','🥚','🌼','🦋','🌻'];
+    for (let i = 0; i < 12; i++) {
+      const el = document.createElement('div');
+      el.className = 'deco';
+      el.textContent = decos[Math.floor(Math.random() * decos.length)];
+      el.style.left = `${Math.random() * 100}%`;
+      el.style.animationDuration = `${Math.random() * 12 + 10}s`;
+      el.style.animationDelay = `${-Math.random() * 12}s`;
+      el.style.fontSize = `${Math.random() * 1.5 + 1}rem`;
+      document.body.appendChild(el);
+    }
+  </script>
+</body>
+</html>
