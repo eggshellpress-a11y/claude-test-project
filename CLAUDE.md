@@ -7,7 +7,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **GitHub:** https://github.com/eggshellpress-a11y/claude-test-project
 **Branch:** main
 
-After every meaningful change: commit with a clear message and push to GitHub.
+### Git workflow
+- Commit and push after every meaningful change — never leave a session with unpushed work
+- Commit messages: imperative mood, short subject line, bullet-point body for multi-part changes (e.g. "Add sound effects to Tic Tac Toe")
+- Stage specific files by name rather than `git add .`
+- Always `git push` immediately after committing so GitHub reflects the latest state
 
 ## Project Structure
 
